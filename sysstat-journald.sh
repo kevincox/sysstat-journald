@@ -21,19 +21,25 @@ sadc -S "${sadc_flags}" "$duration" 2 > "$tmp"
 		awk -F $'\t' '
 			function c(p) {
 				$p = toupper($p);
-				gsub("%", "PCT_", $p);
-				gsub("/", "_PER_", $p);
-				gsub("[^A-Z0-9_-]", "_", $p);
+				gsub("[^A-Z0-9_]", "_", $p);
 				return $p;
 			}
 			
 			{
-				if ($4 == "-")
+				if ($4 == "-") {
 					$4 = "";
-				else
-					$4 += "___";
-					
-				printf "%s%s=%s\n", c(4), c(5), $6;
+				} else {
+					c(4);
+					match($4, /^_*/);
+					$4 = substr($4, RLENGTH+1) "___";
+				}
+				
+				gsub("/", "_PER_", $5);
+				gsub("%", "PCT_", $5);
+				c(5)
+				
+				# print $0;
+				printf "%s%s=%s\n", $4, $5, $6;
 			}
 		'
 	cat <<-END
@@ -41,4 +47,4 @@ sadc -S "${sadc_flags}" "$duration" 2 > "$tmp"
 		SYSLOG_IDENTIFIER=sysstat-journald
 		PRIORITY=6
 	END
-) | logger --journald
+) | tee /dev/stderr | logger --journald
