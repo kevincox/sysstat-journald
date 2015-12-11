@@ -2,19 +2,22 @@
 
 set -e
 
-sadc_flags="${SJ_SADF_TYPES:-DISK,XDISK,INT,IPV6,SNMP}"
+sadc_flags="${SJ_SADC_TYPES:-DISK,XDISK,INT,IPV6,SNMP}"
 unset SJ_SADC_FLAGS
 
-sadf_flags="${SJ_SADC_FLAGS:- -Fj LABEL -Bb -I SUM -n ALL -P ALL -u ALL -r ALL -S -vWw}"
+sar_flags="${SJ_SAR_FLAGS:- -Fj LABEL -Bb -I SUM -n ALL -P ALL -u ALL -r ALL -S -vWw}"
 unset SJ_SADF_FLAGS
+
+duration="${SJ_DURATION:-8}"
+unset SJ_DURATION
 
 tmp="$(mktemp)"
 static="$(mktemp)"
 
-sadc -S "${sadc_flags}" 2 2 > "$tmp"
+sadc -S "${sadc_flags}" "$duration" 2 > "$tmp"
 
 (
-	sadf -p "$tmp" -- $sadf_flags | \
+	sadf -p "$tmp" -- $sar_flags | \
 		awk -F $'\t' '
 			function c(p) {
 				$p = toupper($p);
