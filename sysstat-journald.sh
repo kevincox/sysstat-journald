@@ -12,12 +12,12 @@ duration="${SJ_DURATION:-8}"
 unset SJ_DURATION
 
 tmp="$(mktemp)"
-static="$(mktemp)"
 
 sadc -S "${sadc_flags}" "$duration" 2 > "$tmp"
 
 (
 	sadf -p "$tmp" -- $sar_flags | \
+		sort | \
 		awk -F $'\t' '
 			function c(p) {
 				$p = toupper($p);
@@ -26,6 +26,13 @@ sadc -S "${sadc_flags}" "$duration" 2 > "$tmp"
 			}
 			
 			{
+				# print $0;
+				if (last && ($4 != last4 || $5 != last5)) {
+					print last;
+				}
+				last4 = $4;
+				last5 = $5;
+				
 				if ($4 == "-") {
 					$4 = "";
 				} else {
@@ -38,13 +45,15 @@ sadc -S "${sadc_flags}" "$duration" 2 > "$tmp"
 				gsub("%", "PCT_", $5);
 				c(5)
 				
-				# print $0;
-				printf "%s%s=%s\n", $4, $5, $6;
+				last = $4 $5 "=" $6;
 			}
+			
+			END { if (last) { print last } }
 		'
+	
 	cat <<-END
 		MESSAGE_ID=847dc86c90f14ba7a864b05afdffd5d7
 		SYSLOG_IDENTIFIER=sysstat-journald
 		PRIORITY=6
 	END
-) | tee /dev/stderr | logger --journald
+) | logger --journald
