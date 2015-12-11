@@ -41,4 +41,4 @@ sadc -S "${sadc_flags}" "$duration" 2 > "$tmp"
 		SYSLOG_IDENTIFIER=sysstat-journald
 		PRIORITY=6
 	END
-) |logger --journald
+) | logger --journald
