@@ -11,7 +11,8 @@ unset SJ_SADF_FLAGS
 duration="${SJ_DURATION:-8}"
 unset SJ_DURATION
 
-tmp="$(mktemp)"
+tmp="$(mktemp sysstat-journald.XXXXXXXX)"
+trap 'rm -rf "$tmp"' EXIT
 
 sadc -S "${sadc_flags}" "$duration" 2 > "$tmp"
 
